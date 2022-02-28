@@ -1,6 +1,9 @@
 package com.training.pms.Engine;
 
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Scanner;
 
 import com.training.pms.Models.*;
@@ -16,11 +19,11 @@ import com.training.pms.Exceptions.LoginAuthenticationException;
 import com.training.pms.Utility.DBConnection;
 
 
-public abstract class Engine
+public class Engine
 {
 	/*****************************************************************************************************************************************/
 	// 'Global' Variables handles
-	
+	private static final String adminPass = "admin";
 	// Engine Related handles
 	
 	// Connection Related handles
@@ -33,6 +36,7 @@ public abstract class Engine
 		MainMenu, Login, SignOut, CreateAccount, ViewAccount, Exit, 	// Engine logic
 		MakeTransaction, ChangeAccountDetails, ViewLogs, 				// Account logic
 		Withdrawal, WithdrawalVerification, DepositFunds, TransferFunds,
+		ViewPendingAccounts,
 		TakeMenuInput, TakeCustomerInput, TakeEmployeeInput;			// Input Logic
 	}
 	
@@ -43,7 +47,7 @@ public abstract class Engine
 	/*****************************************************************************************************************************************/
 	// Engine logic
 	// -> Main runtime Loop
-	public static void startEngine()
+	public void startEngine()
 	{
 		// Open Connections
 		establishConnections();
@@ -57,7 +61,7 @@ public abstract class Engine
 	/*****************************************************************************************************************************************/
 	// --> Runtime loop logic
 		// This method contains runtime logic
-	private static void runEngineLogic()
+	private void runEngineLogic()
 	{
 		boolean flag = false;
 		//inputScanner.next();
@@ -72,26 +76,18 @@ public abstract class Engine
 				{
 				case MainMenu:
 					mainMenuLogic();
-					setEngine(EngineFlags.TakeMenuInput);
 					break;
 				case Login:
 					loginLogic();
 					break;
 				case SignOut:
 					signOutLogic();
-					setEngine(EngineFlags.MainMenu);
 					break;
 				case CreateAccount:
 					createAccountLogic();
-					setEngine(EngineFlags.MainMenu);
 					break;
 				case ViewAccount:
 					viewAccountLogic();
-					
-					if(currentUser.isEmployee())
-						setEngine(EngineFlags.TakeEmployeeInput);
-					else
-						setEngine(EngineFlags.TakeCustomerInput);
 					break;
 				/************************************/
 				case MakeTransaction:
@@ -99,11 +95,17 @@ public abstract class Engine
 					break;
 				case ChangeAccountDetails:
 					changeAccountDetailsLogic();
-					setEngine(EngineFlags.ViewAccount);
+					
 					break;
 				case ViewLogs:
 					viewLogsLogic();
 					break;
+				case ViewPendingAccounts:
+					viewPendingLogic();
+					break;
+				/************************************/
+					
+					
 				/************************************/
 				case TakeMenuInput:
 					menuInputHelper();
@@ -118,8 +120,6 @@ public abstract class Engine
 					flag = true;
 					System.out.println("Good Bye!");
 					break;
-					
-					
 				default:
 					System.out.println("Main menu logic error. Default hit.");
 					break;
@@ -130,14 +130,72 @@ public abstract class Engine
 			}
 		}while(!flag);
 	}
+	private void viewPendingLogic() 
+	{
+		EmployeeDAO dao = new EmployeeDAOImpl();
+		
+		printPadding(3);
+		System.out.println("Displaying accounts awaiting approval");
+		ArrayList<Customer> cList = dao.getUserAccountsWaitingApproval();
+		
+		Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order // Reference: https://mkyong.com/java8/java-8-lambda-comparator-example/
+		
+		for(Customer obj : cList)
+			System.out.printf("Customer Id: %-5d | Username: %-12s | Name: %-32s | Balance: %12f |\n", 
+					obj.getAccountId(), obj.getUsername(), obj.getFirstName() + " " + obj.getLastName(), obj.getAccountBalance());
+		
+		printPadding(3);
+		
+		System.out.println("Please enter the id of the account you want to approve.\n -> Note: If an invalid id is provided you will be bounced to the previous screen.");
+		
+		System.out.print("Input: ");
+		
+		if(inputScanner.hasNextInt())
+		{
+			int input = inputScanner.nextInt();
+			
+			Customer ref = null;
+			
+			for(Customer obj : cList)
+				if(obj.getAccountId() == input)
+				{
+					ref = obj;
+					break;
+				}
+			
+			if(ref != null )
+			{
+				UserAccountDAO udao = new UserAccountDAOImpl();
+				if(udao.updateApprovalStatus(ref.getUsername()))
+					System.out.println("Success");
+			}
+			else
+				System.out.println("Customer Id: " + input + " doesn't exist. Returning to previous menu");
+			
+		}
+		else if(inputScanner.hasNext())
+		{
+			String buffer = inputScanner.next();
+			
+			if(buffer.equals("r") || buffer.equals("R"))
+			{
+				setEngine(EngineFlags.ViewAccount);
+			}
+			else
+				System.out.println("Invalid input");
+		}
+		
+		setEngine(EngineFlags.ViewAccount);
+		
+	}
 	/*****************************************************************************************************************************************/
 	//
-	private static void mainMenuLogic()
+	private void mainMenuLogic()
 	{
 		displayMainMenu();
-		//setEngine(EngineFlags.TakeMenuInput);
+		setEngine(EngineFlags.TakeMenuInput);
 	}
-	private static void loginLogic()
+	private void loginLogic()
 	{
 		InputHelper help = new InputHelper();
 		String username = "";
@@ -172,13 +230,15 @@ public abstract class Engine
 		} catch (LoginAuthenticationException e) 
 		{
 			System.out.println(e.getMessage());
+			printPadding();
 		}
 	}
-	private static void signOutLogic()
+	private void signOutLogic()
 	{
-		
+		currentUser = null;
+		setEngine(EngineFlags.MainMenu);
 	}
-	private static void createAccountLogic()
+	private void createAccountLogic()
 	{
 		String tUser = "", tPass = "", tFName = "", tLName = "";
 		float tBalance = 0.0f;
@@ -201,17 +261,24 @@ public abstract class Engine
 					flag = true;
 					break;
 				case 2:
-					flag = true;
+					printPadding();
+					System.out.println("Please Enter Admin Creation Password.");
+					String t = help.requestPassword(inputScanner);
+					
+					if(t.equals(adminPass))
+						flag = true;
+					else
+						System.out.println("Incorrect password, start over.");
 					break;
 				default:
-					System.out.println("Invalid input, please try again.");
+					System.out.println("Invalid input, please try again. \ninput anything to continue.");
 					inputScanner.next();
 					break;
 				}
 			}
 			
 		}while(!flag);
-		
+		printPadding();
 		flag = !flag;
 		
 		System.out.println("Please enter your information...");
@@ -219,6 +286,7 @@ public abstract class Engine
 		help.userStatus = InputHelper.InputStates.requestUsername;
 		do
 		{
+			printPadding();
 			switch(help.userStatus)
 			{
 			case requestUsername:
@@ -245,33 +313,43 @@ public abstract class Engine
 				help.userStatus = InputHelper.InputStates.idle;
 				break;
 			case idle:
+				printPadding(2);
 				if(typeFlag == 2)
 				{
 					EmployeeDAO eDAO = new EmployeeDAOImpl();
 					eDAO.addEmployee(new Employee(tUser,tPass, tFName, tLName));
+					System.out.println("Employee Accounts are activated by default, feel free to sign in.");
 				}
 				else
 				{
 					CustomerDAO cDAO = new CustomerDAOImpl();
-					cDAO.addCustomer(new Customer(tUser, tPass, tFName, tLName, tBalance));	
+					cDAO.addCustomer(new Customer(tUser, tPass, tFName, tLName, tBalance));
+					System.out.println("Please wait for your account to be verified by an admin before attempting to login.");
 				}
+				printPadding(2);
 				flag = true;
 				break;
 			}
 		}while(!flag);
 		
-
+		setEngine(EngineFlags.MainMenu);
 	}
-	private static void viewAccountLogic()
+	private void viewAccountLogic()
 	{
 		// If a customer is the currentUser
-		
+		printPadding();
 		if(currentUser.isEmployee())
+		{
 			displayEmployeeMenu();
+			setEngine(EngineFlags.TakeEmployeeInput);
+		}
 		else
+		{
 			displayCustomerMenu();
+			setEngine(EngineFlags.TakeCustomerInput);
+		}
 	}
-	private static void changeAccountDetailsLogic()
+	private void changeAccountDetailsLogic()
 	{
 		InputHelper help = new InputHelper();
 		
@@ -279,12 +357,13 @@ public abstract class Engine
 		String tLName = help.requestLastname(inputScanner);
 		CustomerDAO dao = new CustomerDAOImpl();
 		dao.updateCustomer(tFName, tLName, currentUser);
+		setEngine(EngineFlags.ViewAccount);
 	}
-	private static void viewLogsLogic()
+	private void viewLogsLogic()
 	{
 		
 	}
-	private static void makeTransactionLogic()
+	private void makeTransactionLogic()
 	{
 		CustomerDAO dao = new CustomerDAOImpl();
 		Customer tRef = dao.searchByCustomerName(currentUser.getUsername());
@@ -342,7 +421,7 @@ public abstract class Engine
 		
 	}
 
-	private static boolean depositFunds(Customer obj)
+	private boolean depositFunds(Customer obj)
 	{
 		boolean depFlag = false; // We can use this for the loop because you're forced to make a valid deposit
 		float amount = 0.0f;
@@ -387,7 +466,7 @@ public abstract class Engine
 		return depFlag;
 	}
 
-	private static Transaction withdrawalRequest(Customer obj)
+	private Transaction withdrawalRequest(Customer obj)
 	{
 		TransactionDAO dao = null;
 		Transaction newTrans = null;
@@ -420,14 +499,19 @@ public abstract class Engine
 		return newTrans;
 	}
 	
-	private static void setEngine(EngineFlags flag)
+	
+	/*****************************************************************************************************************************************/
+	// Helper methods
+	
+	private void setEngine(EngineFlags flag)
 	{
 		engineState = flag;
 	}
 	// Input helper
-	private static void menuInputHelper()
+	private void menuInputHelper()
 	{
 		int input = -1;
+		System.out.print("Input: " );
 		if(inputScanner.hasNextInt())
 		{
 			input = inputScanner.nextInt();
@@ -441,7 +525,9 @@ public abstract class Engine
 			inputScanner.next();
 		}
 	}
-	private static void engineInputHandler(int input)
+	
+	// --> This method is the input controller.
+	private void engineInputHandler(int input)
 	{
 		switch(engineState)
 		{
@@ -475,21 +561,7 @@ public abstract class Engine
 				break;
 			}
 			break;
-	    /**************************************************/	
-		case TakeEmployeeInput:
-			switch(input)
-			{
-			case 1:	engineState = EngineFlags.Exit;
-				break;
-			case 2: engineState = EngineFlags.Exit;
-				break;
-			case 3: engineState = EngineFlags.Exit;
-				break;
-			case 9:
-				engineState = EngineFlags.SignOut;
-				break;
-			}
-			break;
+			
 		case MakeTransaction:
 			switch(input)
 			{
@@ -508,16 +580,31 @@ public abstract class Engine
 			default:
 				break;
 			}
+	    /**************************************************/	
+		case TakeEmployeeInput:
+			switch(input)
+			{
+			case 1:	engineState = EngineFlags.ViewPendingAccounts;
+				break;
+			case 2: engineState = EngineFlags.SignOut;
+				break;
+			case 3: engineState = EngineFlags.SignOut;
+				break;
+			case 9:
+				engineState = EngineFlags.SignOut;
+				break;
+			}
+			break;
+
 		/**************************************************/	
 		default:
-			//System.out.println("Something fucked up lol...");
 			break;
 		}
 	}
 	
 	/*****************************************************************************************************************************************/
 	// ---> Console display helpers
-	private static void displayWelcomeMessage()
+	private void displayWelcomeMessage()
 	{
 		System.out.println(
 				"-------------------------------------------------------------\n" 
@@ -525,7 +612,7 @@ public abstract class Engine
 			+	"-------------------------------------------------------------"
 	  		   );
 	}
-	private static void displayMainMenu()
+	private void displayMainMenu()
 	{
 		System.out.println(
 				"-------- Options --------\n"
@@ -534,7 +621,7 @@ public abstract class Engine
 			+	"9. Exit Program\n"
 				);
 	}
-	private static void displayCustomerMenu()
+	private void displayCustomerMenu()
 	{
 		if(currentUser == null)
 		{
@@ -559,7 +646,7 @@ public abstract class Engine
 				+	"9. Sign out -> Return to Menu\n"
 				);
 	}
-	private static void displayTransactionMenu(Customer obj)
+	private void displayTransactionMenu(Customer obj)
 	{
 		System.out.println(
 					"Your balance is : " + obj.getAccountBalance()
@@ -570,7 +657,7 @@ public abstract class Engine
 				+	"\n9. Return to previous menu"
 				);
 	}
-	private static void displayEmployeeMenu()
+	private void displayEmployeeMenu()
 	{
 		if(currentUser == null)
 		{
@@ -588,21 +675,30 @@ public abstract class Engine
 				+	"------------------------------\n"
 				+ 	"Name:     " + tRef.getFirstName() + " " + tRef.getLastName() + "\n"
 				+	"---------- Options ----------\n"
-				+	"1. View Transactions\n"
+				+	"1. View Accounts awaiting approval\n"
 				+	"2. Change Account Details\n"
 				+	"9. Sign out -> Return to Menu\n"
 				);
 	}
 
 	// ----> Console formating help
-	private static void printPadding()
+	private void printPadding()
 	{
 		System.out.println("================================================");
+	}
+	private void printPadding(int num)
+	{
+		StringBuilder temp = new StringBuilder("");
+		
+		for(int i = 0; i < num; i++)
+			temp.append("================================================");
+		
+		System.out.println(temp.toString());
 	}
 	
 	/*****************************************************************************************************************************************/
 	// --> Connection Methods
-	private static void establishConnections()
+	private void establishConnections()
 	{
 		// Init Scanner
 		inputScanner = new Scanner(System.in);
@@ -610,18 +706,26 @@ public abstract class Engine
 		dbHandle = DBConnection.getConnection();
 	}
 	
-	private static void closeConnections()
+	private void closeConnections()
 	{
 		// Close Scanner
-		inputScanner.close();
+		if(inputScanner != null)
+			inputScanner.close();
+		
+		if(dbHandle != null)
+		{
 		// Close DBServices
-		dbHandle = null;
-		DBConnection.closeConnection();
+			dbHandle = null;
+			DBConnection.closeConnection();
+		}
 		// call gc();
 		System.gc();
-		
-		// Call exit
-		//System.exit(0);
+	}
+	
+	@Override
+	public void finalize()
+	{
+		closeConnections();
 	}
 	
 

@@ -5,7 +5,7 @@ public class UserAccount
 	// Login information
 	protected String username;
 	protected String password;
-	protected boolean signInStatus;
+	protected boolean activationStatus;
 	
 	// User information
 	protected String firstName;
@@ -30,7 +30,7 @@ public class UserAccount
 		super();
 		this.username = username;
 		this.password = password;
-		this.signInStatus = false; // Defaulting to false, so I can force the user to login after creation
+		this.activationStatus = false; // Defaulting to false, so I can force the user to login after creation
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.accountId = accountId;
@@ -43,7 +43,7 @@ public class UserAccount
 	
 	public boolean loginStatus()
 	{
-		return this.signInStatus;
+		return this.activationStatus;
 	}
 	
 	
@@ -66,12 +66,13 @@ public class UserAccount
 		this.password = password;
 	}
 
-	public boolean isSignInStatus() {
-		return signInStatus;
+
+	public boolean isActivationStatus() {
+		return activationStatus;
 	}
 
-	public void setSignInStatus(boolean signInStatus) {
-		this.signInStatus = signInStatus;
+	public void setActivationStatus(boolean activationStatus) {
+		this.activationStatus = activationStatus;
 	}
 
 	public String getFirstName() {

@@ -12,11 +12,12 @@ import com.training.pms.Utility.DBConnection;
 
 public class CustomerDAOImpl implements CustomerDAO 
 {
-	// --> move these to functions to reduce screenspace 
+	// --> move these to functions to reduce screen space 
 	private static final String insertQuery = "insert into customer(balance, fk_userid) values (?, ?)";
 	private static final String updateQuery = "UPDATE public.useraccount SET first_name=?, last_name=? WHERE user_id=?";
 	private static final String deleteQuery = "Select * from customer where customer_id = ?";
-	private static final String getCustomerQuery = "select * from useraccount join customer on fk_userid = user_id where user_name=?";
+	//private static final String getCustomerQuery = "select * from useraccount join customer on fk_userid = user_id where user_name=?";
+	private static final String customerInfo = "select customer_id, user_name, user_password, first_name, last_name, balance from useraccount join customer on fk_userid = user_id where user_name =?";
 	private static final String depositQuery = "Update customer set balance = balance + ? where customer_id = ?";
 	
 	private static Connection connection = DBConnection.getConnection();
@@ -70,7 +71,7 @@ public class CustomerDAOImpl implements CustomerDAO
 		Customer obj = null;
 		try 
 		{
-			state = connection.prepareStatement(getCustomerQuery);
+			state = connection.prepareStatement(customerInfo);
 			state.setString(1, user);
 			
 			ResultSet res = state.executeQuery();
@@ -78,15 +79,15 @@ public class CustomerDAOImpl implements CustomerDAO
 			int cLength = rsmd.getColumnCount();
 			
 			String[] queryData = new String[cLength];
-			String[] queryColumns = new String[cLength];
+			//String[] queryColumns = new String[cLength];
 			
-			DAOHelper.getColumnNames(rsmd, queryColumns);
+			//DAOHelper.getColumnNames(rsmd, queryColumns);
 			
 			while(res.next())// We should only have 1 Account with a given username
 			{
 				DAOHelper.getColumnStrings(cLength, res, queryData);
-				DAOHelper.outputFormatHelper(cLength, queryColumns, queryData);
-				obj = new Customer(Integer.valueOf(queryData[6]), queryData[1], queryData[2], queryData[3], queryData[4], Float.valueOf(queryData[7]));
+				//DAOHelper.outputFormatHelper(cLength, queryColumns, queryData);
+				obj = new Customer(Integer.valueOf(queryData[0]), queryData[1], queryData[2], queryData[3], queryData[4], Float.valueOf(queryData[5])); 
 			}
 		} 
 		catch (SQLException e) 

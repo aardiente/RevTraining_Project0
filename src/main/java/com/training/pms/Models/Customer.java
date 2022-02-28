@@ -30,5 +30,8 @@ public class Customer extends UserAccount
 		return "Customer ID: " + accountId + " | Username " + username + " | Registered Name: " + firstName + " " + lastName + " | Balance: " + accountBalance + " |";  
 	}
 
-
+	public boolean compareIdTo( Customer ref )
+	{
+		return this.getAccountId() > ref.getAccountId();
+	}
 }

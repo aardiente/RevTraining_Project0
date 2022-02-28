@@ -13,11 +13,12 @@ import com.training.pms.Utility.DBConnection;
 
 public class UserAccountDAOImpl implements UserAccountDAO 
 {
-	private static final String insertQuery = "INSERT INTO public.useraccount(user_name, user_password, first_name, last_name, date_created)VALUES(?, ?, ?, ?, ?)";
+	private static final String insertQuery = "INSERT INTO public.useraccount(user_name, user_password, first_name, last_name, date_created, account_activated)VALUES(?, ?, ?, ?, ?, ?)";
 	private static final String updateQuery = "UPDATE public.useraccount SET first_name=?, last_name=? WHERE user_id=?";
 	private static final String deleteQuery = "";
 	private static final String searchByUserNameQuery = "select * from useraccount where user_name=?";
-	private static final String loginVerificationQuery = "select * from useraccount where user_name=? and user_password=?";
+	private static final String loginVerificationQuery = "select * from useraccount where user_name=? and user_password=? and account_activated=true";
+	public static final String updateApprovalStatus = "update useraccount SET account_activated=true where user_name =?";
 	private static Connection connection = DBConnection.getConnection();
 	
 	@Override
@@ -33,12 +34,13 @@ public class UserAccountDAOImpl implements UserAccountDAO
 			state.setString(3, obj.getFirstName());
 			state.setString(4, obj.getLastName());
 			state.setDate(5, new Date(System.currentTimeMillis())); // Stack overflow suggestion for current date
+			state.setBoolean(6, obj.isActivationStatus());
 			
 			int created = state.executeUpdate();
 			obj = searchByUserAccountName(obj.getUsername());
 			
-			if(created >= 0)
-				System.out.println("Object was created: " + obj);
+//			if(created >= 0)
+//				System.out.println("Object was created: " + obj);
 		} 
 		catch (SQLException e) 
 		{
@@ -165,5 +167,28 @@ public class UserAccountDAOImpl implements UserAccountDAO
 		}
 		return validUser;
 
+	}
+
+	@Override
+	public boolean updateApprovalStatus(String username)
+	{
+		try 
+		{
+			PreparedStatement stat = connection.prepareStatement(updateApprovalStatus);
+			stat.setString(1, username);
+			
+			if(stat.executeUpdate() > 0)
+				System.out.println("User: " + username + " approved");
+			else
+				System.out.println("Approval failed");
+		} 
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+		
+		return true;
 	}
 }

@@ -13,7 +13,8 @@ public class App
 {
     public static void main( String[] args )
     {
-    	Engine.startEngine();
+    	Engine e = new Engine();
+    	e.startEngine();
     }
 }
 

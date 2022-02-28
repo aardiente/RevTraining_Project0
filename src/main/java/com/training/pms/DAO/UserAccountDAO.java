@@ -11,5 +11,6 @@ public interface UserAccountDAO
 	public void 		searchByUserAccountId(int id);
 	public boolean		verifyLogin(String user, String pass);
 	public boolean		 isEmployee(String username);
+	public boolean		updateApprovalStatus(String username);
 }
 

@@ -9,7 +9,7 @@ import com.training.pms.Utility.DBConnection;
 
 public class TransactionDAOImpl implements TransactionDAO 
 {
-	private static final String insertQuery = "createTransaction(?, ?, ?)";// first is sender, 2nd is reciever, 3rd is the amount
+	private static final String insertQuery = " INSERT INTO customertransaction	  ( transaction_amount, transaction_date, transaction_approved, fk_customerid_sender, fk_customerid_reciever)VALUES( ?, current_date, false, ?, ?);";// first is sender, 2nd is reciever, 3rd is the amount
 	private static Connection connection = DBConnection.getConnection();
 	
 	@Override
@@ -25,7 +25,7 @@ public class TransactionDAOImpl implements TransactionDAO
 			if(obj.getRecieverHandle() != null)
 				state.setInt(2, obj.getRecieverHandle().getAccountId());
 			else
-				state.setInt(2, -1);
+				state.setInt(2, 16);
 			
 			state.setFloat(3, obj.getTransactionAmount());
 			
