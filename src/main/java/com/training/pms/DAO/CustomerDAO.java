@@ -9,6 +9,7 @@ public interface CustomerDAO //extends UserAccountDAO
 	public boolean 		deleteCustomer(Customer obj);
 	public void 		updateCustomer(String fName, String lName, UserAccount Obj);
 	public Customer 	searchByCustomerName(String fName);
-	public void 		searchByCustomerId(int id);
+	public Customer 	searchByCustomerId(int id);
 	public boolean		updateCustomerBalance(Customer obj, float amount);
+	public boolean		withdrawFromBalance(Customer obj, float amount);
 }

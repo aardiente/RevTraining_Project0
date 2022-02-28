@@ -24,7 +24,6 @@ public class Engine
 	/*****************************************************************************************************************************************/
 	// 'Global' Variables handles
 	private static final String adminPass = "admin";
-	// Engine Related handles
 	
 	// Connection Related handles
 	private static Scanner inputScanner;
@@ -36,7 +35,7 @@ public class Engine
 		MainMenu, Login, SignOut, CreateAccount, ViewAccount, Exit, 	// Engine logic
 		MakeTransaction, ChangeAccountDetails, ViewLogs, 				// Account logic
 		Withdrawal, WithdrawalVerification, DepositFunds, TransferFunds,
-		ViewPendingAccounts,
+		ViewPendingAccounts, ViewPendingTransactions,
 		TakeMenuInput, TakeCustomerInput, TakeEmployeeInput;			// Input Logic
 	}
 	
@@ -46,7 +45,7 @@ public class Engine
 	
 	/*****************************************************************************************************************************************/
 	// Engine logic
-	// -> Main runtime Loop
+	// -> Simply starts the engine, open/close connections, call runtime loop
 	public void startEngine()
 	{
 		// Open Connections
@@ -59,15 +58,13 @@ public class Engine
 		closeConnections();
 	}
 	/*****************************************************************************************************************************************/
-	// --> Runtime loop logic
-		// This method contains runtime logic
+	// Runtime loop logic
+	// -> This method contains runtime logic
 	private void runEngineLogic()
 	{
 		boolean flag = false;
-		//inputScanner.next();
 		
 		displayWelcomeMessage();
-		
 		do
 		{
 			try 
@@ -93,6 +90,16 @@ public class Engine
 				case MakeTransaction:
 					makeTransactionLogic();
 					break;
+				case DepositFunds:
+					depositFunds();
+					break;
+				case Withdrawal:
+					withdrawalRequest();
+					break;
+				case TransferFunds:
+					transferFundsLogic();
+					break;
+					
 				case ChangeAccountDetails:
 					changeAccountDetailsLogic();
 					
@@ -103,9 +110,15 @@ public class Engine
 				case ViewPendingAccounts:
 					viewPendingLogic();
 					break;
-				/************************************/
+
+				case ViewPendingTransactions:
+					if(currentUser.isEmployee())
+						viewPendingTransactions();
+					else
+						viewCustomerTransactions();
+					break;
 					
-					
+
 				/************************************/
 				case TakeMenuInput:
 					menuInputHelper();
@@ -121,7 +134,8 @@ public class Engine
 					System.out.println("Good Bye!");
 					break;
 				default:
-					System.out.println("Main menu logic error. Default hit.");
+					System.out.println("Main menu logic error. Default hit. Closing program.");
+					flag = true;
 					break;
 				}
 			} catch (Exception e) 
@@ -130,66 +144,9 @@ public class Engine
 			}
 		}while(!flag);
 	}
-	private void viewPendingLogic() 
-	{
-		EmployeeDAO dao = new EmployeeDAOImpl();
-		
-		printPadding(3);
-		System.out.println("Displaying accounts awaiting approval");
-		ArrayList<Customer> cList = dao.getUserAccountsWaitingApproval();
-		
-		Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order // Reference: https://mkyong.com/java8/java-8-lambda-comparator-example/
-		
-		for(Customer obj : cList)
-			System.out.printf("Customer Id: %-5d | Username: %-12s | Name: %-32s | Balance: %12f |\n", 
-					obj.getAccountId(), obj.getUsername(), obj.getFirstName() + " " + obj.getLastName(), obj.getAccountBalance());
-		
-		printPadding(3);
-		
-		System.out.println("Please enter the id of the account you want to approve.\n -> Note: If an invalid id is provided you will be bounced to the previous screen.");
-		
-		System.out.print("Input: ");
-		
-		if(inputScanner.hasNextInt())
-		{
-			int input = inputScanner.nextInt();
-			
-			Customer ref = null;
-			
-			for(Customer obj : cList)
-				if(obj.getAccountId() == input)
-				{
-					ref = obj;
-					break;
-				}
-			
-			if(ref != null )
-			{
-				UserAccountDAO udao = new UserAccountDAOImpl();
-				if(udao.updateApprovalStatus(ref.getUsername()))
-					System.out.println("Success");
-			}
-			else
-				System.out.println("Customer Id: " + input + " doesn't exist. Returning to previous menu");
-			
-		}
-		else if(inputScanner.hasNext())
-		{
-			String buffer = inputScanner.next();
-			
-			if(buffer.equals("r") || buffer.equals("R"))
-			{
-				setEngine(EngineFlags.ViewAccount);
-			}
-			else
-				System.out.println("Invalid input");
-		}
-		
-		setEngine(EngineFlags.ViewAccount);
-		
-	}
+
 	/*****************************************************************************************************************************************/
-	//
+	// Main menu logic
 	private void mainMenuLogic()
 	{
 		displayMainMenu();
@@ -232,11 +189,6 @@ public class Engine
 			System.out.println(e.getMessage());
 			printPadding();
 		}
-	}
-	private void signOutLogic()
-	{
-		currentUser = null;
-		setEngine(EngineFlags.MainMenu);
 	}
 	private void createAccountLogic()
 	{
@@ -334,6 +286,8 @@ public class Engine
 		
 		setEngine(EngineFlags.MainMenu);
 	}
+
+	// User Account Subclass logic
 	private void viewAccountLogic()
 	{
 		// If a customer is the currentUser
@@ -359,10 +313,13 @@ public class Engine
 		dao.updateCustomer(tFName, tLName, currentUser);
 		setEngine(EngineFlags.ViewAccount);
 	}
-	private void viewLogsLogic()
+	private void signOutLogic()
 	{
-		
+		currentUser = null;
+		setEngine(EngineFlags.MainMenu);
 	}
+	
+	// Customer Logic
 	private void makeTransactionLogic()
 	{
 		CustomerDAO dao = new CustomerDAOImpl();
@@ -383,7 +340,21 @@ public class Engine
 			if(inputScanner.hasNextInt())
 			{
 				input = inputScanner.nextInt();
-				engineInputHandler(input);
+				
+				//engineInputHandler(input);
+				switch(input)
+				{
+				case 1:
+					setEngine(EngineFlags.DepositFunds);
+					break;
+				case 2:
+					setEngine(EngineFlags.Withdrawal);
+					break;
+				case 3:
+					setEngine(EngineFlags.TransferFunds);
+					break;
+				}
+				//setEngine(EngineFlags.MakeTransaction);
 				flag = true;
 			}
 			else
@@ -393,36 +364,13 @@ public class Engine
 				input = -1;
 			}
 			
-			switch(engineState)
-			{
-			case MakeTransaction: // Do nothing default state
-				break;
-			case DepositFunds:
-				depositFunds(tRef);
-				setEngine(EngineFlags.ViewAccount);
-				break;
-			case Withdrawal:
-				withdrawalRequest(tRef);
-				setEngine(EngineFlags.ViewAccount);
-				break;
-			case WithdrawalVerification:
-				setEngine(EngineFlags.ViewAccount);
-				break;
-				
-			case TransferFunds:
-				setEngine(EngineFlags.ViewAccount);
-				break;
-			default:
-				break;
-			}
-
 		}while(!flag);
 		
 		
 	}
-
-	private boolean depositFunds(Customer obj)
+	private boolean depositFunds()
 	{
+		//CustomerDAO dao = new CustomerDAOImpl();
 		boolean depFlag = false; // We can use this for the loop because you're forced to make a valid deposit
 		float amount = 0.0f;
 		
@@ -446,7 +394,7 @@ public class Engine
 					CustomerDAO dao = new CustomerDAOImpl();
 					
 					printPadding();
-					if(dao.updateCustomerBalance(obj, amount))
+					if(dao.updateCustomerBalance(dao.searchByCustomerName(currentUser.getUsername()), amount))
 						System.out.println("Succesfully deposited the amount of " + amount + " to your account.");
 					else
 						System.out.println("Failed Query, debug");
@@ -462,51 +410,187 @@ public class Engine
 			}
 			
 		}while(!depFlag);
-			
+		
+		setEngine(EngineFlags.ViewAccount);
 		return depFlag;
 	}
-
-	private Transaction withdrawalRequest(Customer obj)
+	private Transaction withdrawalRequest()
 	{
-		TransactionDAO dao = null;
 		Transaction newTrans = null;
-		boolean flag = false;
 		float amount = 0.0f;
+
+		System.out.print("Please enter the amount that you want to withdrawal: ");
 		
-		do
+		if(inputScanner.hasNextFloat())
 		{
-			System.out.print("Please enter the amount that you want to withdrawal: ");
+			amount = inputScanner.nextFloat();
 			
+			if(amount > 250)
+			{
+				CustomerDAO cdao = new CustomerDAOImpl();
+				Customer obj = cdao.searchByCustomerName(currentUser.getUsername());
+				
+				newTrans = new Transaction(obj.getAccountId(), amount, obj, obj);
+				
+				TransactionDAO dao = new TransactionDAOImpl();
+				dao.addTransaction(newTrans);
+				
+				setEngine(EngineFlags.ViewAccount);
+			}
+			else if(amount <= 250 & amount > 0 )
+			{
+				CustomerDAO cdao = new CustomerDAOImpl();
+				Customer obj = cdao.searchByCustomerName(currentUser.getUsername());
+				
+				if(cdao.withdrawFromBalance(obj, amount))
+					System.out.println("Withdraw Success");
+				else
+					System.out.println("invalid transaction");
+				
+				setEngine(EngineFlags.ViewAccount);
+			}
+			else
+			{
+				System.out.println("Invalid input.");
+				inputScanner.next();
+			}
+		}
+
+		return newTrans;
+	}
+	private void transferFundsLogic()
+	{
+		printPadding(2);
+		System.out.println("Please enter the username of the account you'd like to transfer with: ");
+		
+		InputHelper help = new InputHelper();
+		String recieverInput = help.requestUsername(inputScanner);
+		
+		CustomerDAO cdao = new CustomerDAOImpl();
+		
+		Customer reciever = cdao.searchByCustomerName(recieverInput);
+		
+		if(reciever == null)
+			System.out.println("There was no user by that name. Returning to menu");
+		else
+		{
+			float amount = 0f;
+			System.out.print("Please enter the amount you'd like to transfer: ");
 			if(inputScanner.hasNextFloat())
 			{
 				amount = inputScanner.nextFloat();
 				
-				if(amount > 0)
-				{
-					newTrans = new Transaction(obj.getAccountId(), amount, obj);
-					dao = new TransactionDAOImpl();
-					dao.addTransaction(newTrans);
-					flag = true;
-				}
-				else
-				{
-					System.out.println("Invalid input, please try again");
-					inputScanner.next();
-				}
+				Transaction nT = new Transaction(-1, amount, cdao.searchByCustomerName(currentUser.getUsername()), reciever);
+				TransactionDAO tDao = new TransactionDAOImpl();
+				tDao.addTransaction(nT);
 			}
-		}while(!flag);
-		
-		return newTrans;
+		}
+		setEngine(EngineFlags.ViewAccount);
 	}
 	
+	private void viewCustomerTransactions()
+	{
+		System.out.println("\nI was called\n\n");
+		TransactionDAO tDao = new TransactionDAOImpl();
+		CustomerDAO cDao = new CustomerDAOImpl();
+		Customer curCust = cDao.searchByCustomerName(currentUser.getUsername());
+		ArrayList<Transaction> tList = tDao.getPendingTransactionsById(curCust.getAccountId());
+		
+		for(Transaction t : tList)
+		{
+			if(t != null)
+				System.out.println(t);
+		}
+		
+		setEngine(EngineFlags.ViewAccount);
+	}
+	
+	// Employee Logic
+	private void viewPendingLogic() 
+	{
+		EmployeeDAO dao = new EmployeeDAOImpl();
+		
+		printPadding(3);
+		System.out.println("Displaying accounts awaiting approval");
+		ArrayList<Customer> cList = dao.getUserAccountsWaitingApproval();
+		
+		Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order // Reference: https://mkyong.com/java8/java-8-lambda-comparator-example/
+		
+		for(Customer obj : cList)
+			System.out.printf("Customer Id: %-5d | Username: %-12s | Name: %-32s | Balance: %12f |\n", 
+					obj.getAccountId(), obj.getUsername(), obj.getFirstName() + " " + obj.getLastName(), obj.getAccountBalance());
+		
+		printPadding(3);
+		
+		System.out.println("Please enter the id of the account you want to approve.\n -> Note: If an invalid id is provided you will be bounced to the previous screen.");
+		System.out.print("Input: ");
+		
+		if(inputScanner.hasNextInt())
+		{
+			int input = inputScanner.nextInt();
+			
+			Customer ref = null;
+			
+			for(Customer obj : cList)
+				if(obj.getAccountId() == input)
+				{
+					ref = obj;
+					break;
+				}
+			
+			if(ref != null )
+			{
+				UserAccountDAO udao = new UserAccountDAOImpl();
+				if(udao.updateApprovalStatus(ref.getUsername()))
+					System.out.println("Success");
+			}
+			else
+				System.out.println("Customer Id: " + input + " doesn't exist. Returning to previous menu");
+			
+		}
+		else if(inputScanner.hasNext())
+		{
+			String buffer = inputScanner.next();
+			
+			if(buffer.equals("r") || buffer.equals("R"))
+			{
+				setEngine(EngineFlags.ViewAccount);
+			}
+			else
+				System.out.println("Invalid input");
+		}
+		
+		setEngine(EngineFlags.ViewAccount);
+		
+	}
+	private void viewPendingTransactions()
+	{
+		TransactionDAO tDao = new TransactionDAOImpl();
+		ArrayList<Transaction> tList = tDao.getPendingTransactions();
+		
+		for(Transaction t : tList)
+		{
+			if(t != null)
+				System.out.println(t);
+		}
+		
+		setEngine(EngineFlags.ViewAccount);
+	}
+	private void viewLogsLogic()
+	{
+		
+	}
 	
 	/*****************************************************************************************************************************************/
 	// Helper methods
 	
+	// State Machine helper
+	// --> This basically is just a wrapper around assigning engineState. Its less typing and less ugly to look at.
 	private void setEngine(EngineFlags flag)
 	{
 		engineState = flag;
 	}
+	
 	// Input helper
 	private void menuInputHelper()
 	{
@@ -525,7 +609,6 @@ public class Engine
 			inputScanner.next();
 		}
 	}
-	
 	// --> This method is the input controller.
 	private void engineInputHandler(int input)
 	{
@@ -554,6 +637,9 @@ public class Engine
 				engineState = EngineFlags.MakeTransaction;
 				break;
 			case 2:
+				setEngine(EngineFlags.ViewPendingTransactions);
+				break;
+			case 3:
 				engineState = EngineFlags.ChangeAccountDetails;
 				break;
 			case 9:
@@ -562,33 +648,15 @@ public class Engine
 			}
 			break;
 			
-		case MakeTransaction:
-			switch(input)
-			{
-			case 1:
-				setEngine(EngineFlags.DepositFunds);
-				break;
-			case 2:
-				setEngine(EngineFlags.Withdrawal);
-				break;
-			case 3: 
-				setEngine(EngineFlags.TransferFunds);
-				break;
-			case 9:
-				setEngine(EngineFlags.ViewAccount);
-				break;
-			default:
-				break;
-			}
 	    /**************************************************/	
 		case TakeEmployeeInput:
 			switch(input)
 			{
 			case 1:	engineState = EngineFlags.ViewPendingAccounts;
 				break;
-			case 2: engineState = EngineFlags.SignOut;
+			case 2: engineState = EngineFlags.ViewPendingTransactions;
 				break;
-			case 3: engineState = EngineFlags.SignOut;
+			case 3: engineState = EngineFlags.ChangeAccountDetails;
 				break;
 			case 9:
 				engineState = EngineFlags.SignOut;
@@ -641,8 +709,9 @@ public class Engine
 				+ 	"Name:     " + tRef.getFirstName() + " " + tRef.getLastName() + "\n"
 				+	"Balance:  " + tRef.getAccountBalance() + "\n"
 				+	"---------- Options ----------\n"
-				+	"1. Make Transaction\n"
-				+	"2. Change Account Details\n"
+				+	"1. Create Transaction\n"
+				+	"2. View Transaction\n"
+				+	"3. Change Account Details\n"
 				+	"9. Sign out -> Return to Menu\n"
 				);
 	}
@@ -675,8 +744,9 @@ public class Engine
 				+	"------------------------------\n"
 				+ 	"Name:     " + tRef.getFirstName() + " " + tRef.getLastName() + "\n"
 				+	"---------- Options ----------\n"
-				+	"1. View Accounts awaiting approval\n"
-				+	"2. Change Account Details\n"
+				+	"1. View Accounts\n"
+				+	"2. View Transactions\n"
+				+	"3. Change Account Details\n"
 				+	"9. Sign out -> Return to Menu\n"
 				);
 	}
@@ -705,7 +775,6 @@ public class Engine
 		DBConnection.initConnection();
 		dbHandle = DBConnection.getConnection();
 	}
-	
 	private void closeConnections()
 	{
 		// Close Scanner
@@ -722,11 +791,13 @@ public class Engine
 		System.gc();
 	}
 	
+	/*****************************************************************************************************************************************/
+	// Override methods
+	// --> This is just ensuring our db is getting closed
 	@Override
 	public void finalize()
 	{
 		closeConnections();
 	}
-	
 
 }

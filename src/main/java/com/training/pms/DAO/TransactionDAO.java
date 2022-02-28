@@ -1,5 +1,7 @@
 package com.training.pms.DAO;
 
+import java.util.ArrayList;
+
 import com.training.pms.Models.Transaction;
 
 public interface TransactionDAO 
@@ -9,4 +11,7 @@ public interface TransactionDAO
 	public void 	updateTransaction(String fName, String lName);
 	public void 	searchByTransactionName(String fName);
 	public void 	searchByTransactionId(int id);
+	public ArrayList<Transaction> getPendingTransactions();
+	public ArrayList<Transaction> getPendingTransactionsById(int id);
+	public ArrayList<Transaction> getPendingTransactionsByCustomerId( int id );
 }

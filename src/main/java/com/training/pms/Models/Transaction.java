@@ -8,7 +8,7 @@ public class Transaction
 	private float transactionAmount;
 	private float startingBalance;
 	private float updatedBalance;
-	private Customer customerHandle;
+	private Customer senderHandle;
 	private Customer recieverHandle;
 	private Employee employeeHandle;
 	
@@ -46,7 +46,7 @@ public class Transaction
 	{
 		transactionId = id;
 		transactionAmount = amount;
-		customerHandle = obj;
+		senderHandle = obj;
 		startingBalance = obj.getAccountBalance();
 		updatedBalance = 0.0f;
 		status = ConfirmationFlags.pending; // defaulting to false for now
@@ -93,11 +93,11 @@ public class Transaction
 	}
 
 	public Customer getCustomerHandle() {
-		return customerHandle;
+		return senderHandle;
 	}
 
 	public void setCustomerHandle(Customer customerHandle) {
-		this.customerHandle = customerHandle;
+		this.senderHandle = customerHandle;
 	}
 
 	public Customer getRecieverHandle() {
@@ -127,14 +127,13 @@ public class Transaction
 	@Override
 	public String toString()
 	{
-		return "Transaction ID: " + transactionId 
-					+ "\n| For " + customerHandle + " | Amount: " + transactionAmount + " | Status" + status;
+		return "Transaction ID: " + transactionId + " | To: " + recieverHandle.username + " | From: " + senderHandle.username + " | Amount: " + transactionAmount + " | Status" + status;
 	}
 	
 	@Override
 	public void finalize()
 	{
-		customerHandle = null;
+		senderHandle = null;
 		employeeHandle = null;
 	}
 
