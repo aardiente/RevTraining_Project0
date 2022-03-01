@@ -50,14 +50,17 @@ public class Transaction
 		startingBalance = obj.getAccountBalance();
 		updatedBalance = 0.0f;
 		status = ConfirmationFlags.pending; // defaulting to false for now
-	}
-	
+	}	
 	public Transaction(int id, float amount, Customer owner, Customer reciever)
 	{
 		this(id, amount, owner);
 		this.recieverHandle = reciever;
 	}
-	
+	public Transaction(int id, float amount, Customer owner, Customer reciever, boolean approved)
+	{
+		this(id, amount, owner, reciever);
+		this.status = (approved) ? ConfirmationFlags.pending : ConfirmationFlags.approved;
+	}
 
 
 	public int getTransactionId() {
@@ -127,7 +130,7 @@ public class Transaction
 	@Override
 	public String toString()
 	{
-		return "Transaction ID: " + transactionId + " | To: " + recieverHandle.username + " | From: " + senderHandle.username + " | Amount: " + transactionAmount + " | Status" + status;
+		return "Transaction ID: " + transactionId + " | To: " + recieverHandle.username + " | From: " + senderHandle.username + " | Amount: " + transactionAmount + " | Status " + status;
 	}
 	
 	@Override

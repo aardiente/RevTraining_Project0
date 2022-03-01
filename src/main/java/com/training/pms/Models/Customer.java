@@ -9,7 +9,7 @@ public class Customer extends UserAccount
 	public Customer(String username, String password, String firstName, String lastName, float balance) 
 	{
 		super(-1, username, password, firstName, lastName);
-		accountBalance = (minBalance <= balance) ? balance : minBalance;
+		accountBalance = balance;
 		accountType = UserAccount.AccountType.Customer;
 	}
 	public Customer(int id, String username, String password, String firstName, String lastName, float balance)

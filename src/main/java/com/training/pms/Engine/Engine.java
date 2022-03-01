@@ -99,10 +99,8 @@ public class Engine
 				case TransferFunds:
 					transferFundsLogic();
 					break;
-					
 				case ChangeAccountDetails:
 					changeAccountDetailsLogic();
-					
 					break;
 				case ViewLogs:
 					viewLogsLogic();
@@ -262,7 +260,11 @@ public class Engine
 				break;
 			case requestBalance:
 				tBalance = help.requestBalance(inputScanner);
-				help.userStatus = InputHelper.InputStates.idle;
+				
+				if(tBalance >= 1000.0f)
+					help.userStatus = InputHelper.InputStates.idle;
+				else
+					System.out.println("Starting balance is $1000.00");
 				break;
 			case idle:
 				printPadding(2);
@@ -480,9 +482,8 @@ public class Engine
 			{
 				amount = inputScanner.nextFloat();
 				
-				Transaction nT = new Transaction(-1, amount, cdao.searchByCustomerName(currentUser.getUsername()), reciever);
 				TransactionDAO tDao = new TransactionDAOImpl();
-				tDao.addTransaction(nT);
+				tDao.addTransaction(new Transaction(-1, amount, cdao.searchByCustomerName(currentUser.getUsername()), reciever)); // -1 because its going to get assigned a value in the db
 			}
 		}
 		setEngine(EngineFlags.ViewAccount);
@@ -490,7 +491,6 @@ public class Engine
 	
 	private void viewCustomerTransactions()
 	{
-		System.out.println("\nI was called\n\n");
 		TransactionDAO tDao = new TransactionDAOImpl();
 		CustomerDAO cDao = new CustomerDAOImpl();
 		Customer curCust = cDao.searchByCustomerName(currentUser.getUsername());
@@ -499,8 +499,22 @@ public class Engine
 		for(Transaction t : tList)
 		{
 			if(t != null)
+			{
 				System.out.println(t);
+				System.out.print("Would you like to approve this transaction? (Y/N): ");
+				String input = inputScanner.next();
+				
+				if( input.toUpperCase().equals("Y") )
+				{
+					tDao.processTransaction(t);
+					printPadding(2);
+				}
+					
+			}
 		}
+		
+		printPadding(2);
+		System.out.print("");
 		
 		setEngine(EngineFlags.ViewAccount);
 	}
@@ -510,72 +524,88 @@ public class Engine
 	{
 		EmployeeDAO dao = new EmployeeDAOImpl();
 		
-		printPadding(3);
-		System.out.println("Displaying accounts awaiting approval");
 		ArrayList<Customer> cList = dao.getUserAccountsWaitingApproval();
 		
-		Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order // Reference: https://mkyong.com/java8/java-8-lambda-comparator-example/
-		
-		for(Customer obj : cList)
-			System.out.printf("Customer Id: %-5d | Username: %-12s | Name: %-32s | Balance: %12f |\n", 
-					obj.getAccountId(), obj.getUsername(), obj.getFirstName() + " " + obj.getLastName(), obj.getAccountBalance());
-		
-		printPadding(3);
-		
-		System.out.println("Please enter the id of the account you want to approve.\n -> Note: If an invalid id is provided you will be bounced to the previous screen.");
-		System.out.print("Input: ");
-		
-		if(inputScanner.hasNextInt())
+		if(cList.size() > 0)
 		{
-			int input = inputScanner.nextInt();
-			
-			Customer ref = null;
+			Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order // Reference: https://mkyong.com/java8/java-8-lambda-comparator-example/
 			
 			for(Customer obj : cList)
-				if(obj.getAccountId() == input)
+				System.out.printf("Customer Id: %-5d | Username: %-12s | Name: %-32s | Balance: %12f |\n", 
+						obj.getAccountId(), obj.getUsername(), obj.getFirstName() + " " + obj.getLastName(), obj.getAccountBalance());
+			
+			printPadding(3);
+			
+			System.out.println("Please enter the id of the account you want to approve.\n -> Note: If an invalid id is provided you will be bounced to the previous screen.");
+			System.out.print("Input: ");
+			
+			if(inputScanner.hasNextInt())
+			{
+				int input = inputScanner.nextInt();
+				
+				Customer ref = null;
+				
+				for(Customer obj : cList)
+					if(obj.getAccountId() == input)
+					{
+						ref = obj;
+						break;
+					}
+				
+				if(ref != null )
 				{
-					ref = obj;
-					break;
+					UserAccountDAO udao = new UserAccountDAOImpl();
+					if(udao.updateApprovalStatus(ref.getUsername()))
+						System.out.println("Success");
 				}
-			
-			if(ref != null )
-			{
-				UserAccountDAO udao = new UserAccountDAOImpl();
-				if(udao.updateApprovalStatus(ref.getUsername()))
-					System.out.println("Success");
+				else
+					System.out.println("Customer Id: " + input + " doesn't exist. Returning to previous menu");
+				
 			}
-			else
-				System.out.println("Customer Id: " + input + " doesn't exist. Returning to previous menu");
-			
-		}
-		else if(inputScanner.hasNext())
-		{
-			String buffer = inputScanner.next();
-			
-			if(buffer.equals("r") || buffer.equals("R"))
+			else if(inputScanner.hasNext())
 			{
-				setEngine(EngineFlags.ViewAccount);
+				String buffer = inputScanner.next();
+				
+				if(buffer.equals("r") || buffer.equals("R"))
+				{
+					setEngine(EngineFlags.ViewAccount);
+				}
+				else
+					System.out.println("Invalid input");
 			}
-			else
-				System.out.println("Invalid input");
 		}
+		else
+			System.out.println("Transaction Box is Empty... :(");
 		
 		setEngine(EngineFlags.ViewAccount);
 		
 	}
 	private void viewPendingTransactions()
 	{
+		System.out.print("1. For all transactions | 2. For Pending Transactions\nInput: ");
+		
+		int input = inputScanner.nextInt();
+		
 		TransactionDAO tDao = new TransactionDAOImpl();
-		ArrayList<Transaction> tList = tDao.getPendingTransactions();
+		ArrayList<Transaction> tList = null;
+		
+		if(input == 1)
+			tList = tDao.getAllTransactions();
+		else if(input == 2)
+			tList = tDao.getPendingTransactions();
 		
 		for(Transaction t : tList)
 		{
 			if(t != null)
+			{
 				System.out.println(t);
+				printPadding(2);
+			}
 		}
 		
 		setEngine(EngineFlags.ViewAccount);
 	}
+
 	private void viewLogsLogic()
 	{
 		

@@ -11,6 +11,8 @@ public interface TransactionDAO
 	public void 	updateTransaction(String fName, String lName);
 	public void 	searchByTransactionName(String fName);
 	public void 	searchByTransactionId(int id);
+	public boolean processTransaction(Transaction obj);
+	public ArrayList<Transaction> getAllTransactions();
 	public ArrayList<Transaction> getPendingTransactions();
 	public ArrayList<Transaction> getPendingTransactionsById(int id);
 	public ArrayList<Transaction> getPendingTransactionsByCustomerId( int id );
