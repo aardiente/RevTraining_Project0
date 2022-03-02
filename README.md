@@ -1,24 +1,3 @@
-<style>
-body
-{
-	background: black;
-	color: white;
-}
-h1
-{
-	color: white;
-}
-h2
-{
-	color: red;
-}
-h3
-{
-	color: rgb(56, 223, 32);
-}
-
-</style>
-
 <h1> Welcome to my P-0 Repository </h1>
 
 <body>
