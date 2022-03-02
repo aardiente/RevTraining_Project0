@@ -15,10 +15,10 @@ public class UserAccountDAOImpl implements UserAccountDAO
 {
 	private static final String insertQuery = "INSERT INTO public.useraccount(user_name, user_password, first_name, last_name, date_created, account_activated)VALUES(?, ?, ?, ?, ?, ?)";
 	private static final String updateQuery = "UPDATE public.useraccount SET first_name=?, last_name=? WHERE user_id=?";
-	private static final String deleteQuery = "";
+	private static final String deleteQuery = "delete from useraccount where user_name =?";
 	private static final String searchByUserNameQuery = "select * from useraccount where user_name=?";
 	private static final String loginVerificationQuery = "select * from useraccount where user_name=? and user_password=? and account_activated=true";
-	public static final String updateApprovalStatus = "update useraccount SET account_activated=true where user_name =?";
+	private static final String updateApprovalStatus = "update useraccount SET account_activated=true where user_name =?";
 	private static Connection connection = DBConnection.getConnection();
 	
 	@Override
@@ -51,8 +51,24 @@ public class UserAccountDAOImpl implements UserAccountDAO
 	}
 
 	@Override
-	public boolean deleteUserAccount(UserAccount obj) {
-		// TODO Auto-generated method stub
+	public boolean deleteUserAccount(UserAccount obj) 
+	{
+		try 
+		{
+			PreparedStatement stat = connection.prepareStatement(deleteQuery);
+			stat.setString(1, obj.getUsername());
+			
+			if(stat.executeUpdate() > 0)
+				return true;
+		}
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}catch (NullPointerException e)
+		{
+			e.printStackTrace();
+		}
+		
 		return false;
 	}
 
@@ -144,7 +160,6 @@ public class UserAccountDAOImpl implements UserAccountDAO
 		}
 		return false;
 	}
-	
 	
 	@Override
 	public boolean verifyLogin(String user, String pass) 

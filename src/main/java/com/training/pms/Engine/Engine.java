@@ -404,7 +404,7 @@ public class Engine
 			}
 			else
 			{
-				System.out.println("Invalid input... Try again");
+				System.out.println("Invalid input... Try again\nAny key to continue...");
 				inputScanner.next();
 			}
 			
@@ -543,7 +543,7 @@ public class Engine
 		
 		if(cList.size() > 0)
 		{
-			Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order // Reference: https://mkyong.com/java8/java-8-lambda-comparator-example/
+			Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order 
 			
 			for(Customer obj : cList)
 				System.out.printf("Customer Id: %-5d | Username: %-12s | Name: %-32s | Balance: %12f |\n", 
@@ -570,8 +570,24 @@ public class Engine
 				if(ref != null )
 				{
 					UserAccountDAO udao = new UserAccountDAOImpl();
-					if(udao.updateApprovalStatus(ref.getUsername()))
-						System.out.println("Success");
+					
+					printPadding();
+					System.out.print("Activate account (Y/N): ");
+					String buff = inputScanner.next();
+					
+					if(buff.toUpperCase().equals("Y"))
+					{
+						if(udao.updateApprovalStatus(ref.getUsername()))
+							System.out.println("Account Activated");
+					}
+					else if( buff.toUpperCase().equals("N") )
+					{
+						if(udao.deleteUserAccount(ref))
+							System.out.println("Account Deactivated (Deleted)");
+					}
+					else
+						System.out.println("Invalid input.");
+					
 				}
 				else
 					System.out.println("Customer Id: " + input + " doesn't exist. Returning to previous menu");

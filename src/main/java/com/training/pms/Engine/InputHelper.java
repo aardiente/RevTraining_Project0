@@ -110,7 +110,7 @@ public class InputHelper
 		{
 			try
 			{
-				System.out.print("Please enter your password\n(at least 5 characters): ");
+				System.out.print("Please enter your password\n(at least 5 characters):    ");
 				tPass1 = input.next();
 				
 				if(!tPass1.equals("") & tPass1.length() >= 5 )

@@ -1,7 +1,5 @@
 package com.training.pms;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
 
 import com.training.pms.Engine.Engine;
 

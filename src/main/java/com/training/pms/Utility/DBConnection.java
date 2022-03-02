@@ -23,8 +23,6 @@ public class DBConnection
         return dbConnection;
 	}
 	
-	
-	
 	public static void initConnection()
 	{
         try 
