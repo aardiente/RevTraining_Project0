@@ -3,10 +3,10 @@ package com.training.pms.Engine;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Scanner;
 
 import com.training.pms.Models.*;
+import com.training.pms.Models.Transaction.ConfirmationFlags;
 import com.training.pms.DAO.CustomerDAO;
 import com.training.pms.DAO.CustomerDAOImpl;
 import com.training.pms.DAO.EmployeeDAO;
@@ -33,9 +33,9 @@ public class Engine
 	private static enum EngineFlags
 	{
 		MainMenu, Login, SignOut, CreateAccount, ViewAccount, Exit, 	// Engine logic
-		MakeTransaction, ChangeAccountDetails, ViewLogs, 				// Account logic
+		MakeTransaction, ChangeAccountDetails,  						// Account logic
 		Withdrawal, WithdrawalVerification, DepositFunds, TransferFunds,
-		ViewPendingAccounts, ViewPendingTransactions,
+		ViewPendingAccounts, ViewTransactions,
 		TakeMenuInput, TakeCustomerInput, TakeEmployeeInput;			// Input Logic
 	}
 	
@@ -45,7 +45,7 @@ public class Engine
 	
 	/*****************************************************************************************************************************************/
 	// Engine logic
-	// -> Simply starts the engine, open/close connections, call runtime loop
+	// -> Simply starts the engine, open/close connections, call runtime loop. The ONLY public method.
 	public void startEngine()
 	{
 		// Open Connections
@@ -102,16 +102,12 @@ public class Engine
 				case ChangeAccountDetails:
 					changeAccountDetailsLogic();
 					break;
-				case ViewLogs:
-					viewLogsLogic();
-					break;
 				case ViewPendingAccounts:
 					viewPendingLogic();
 					break;
-
-				case ViewPendingTransactions:
+				case ViewTransactions:
 					if(currentUser.isEmployee())
-						viewPendingTransactions();
+						viewTransactions();
 					else
 						viewCustomerTransactions();
 					break;
@@ -139,6 +135,7 @@ public class Engine
 			} catch (Exception e) 
 			{
 				e.printStackTrace();
+				flag = true;
 			}
 		}while(!flag);
 	}
@@ -496,6 +493,13 @@ public class Engine
 		Customer curCust = cDao.searchByCustomerName(currentUser.getUsername());
 		ArrayList<Transaction> tList = tDao.getPendingTransactionsById(curCust.getAccountId());
 		
+		if(tList.size() > 0)
+			printPadding(2);
+		else
+		{
+			printPadding();
+			System.out.println("You have no available transactions.");
+		}
 		for(Transaction t : tList)
 		{
 			if(t != null)
@@ -506,15 +510,26 @@ public class Engine
 				
 				if( input.toUpperCase().equals("Y") )
 				{
-					tDao.processTransaction(t);
+					t.setStatus(ConfirmationFlags.approved);
+					
+					if(tDao.processTransaction(t))
+						System.out.println("Transaction Approved");
+				}
+				else if(input.toUpperCase().equals("N"))
+				{
+					t.setStatus(ConfirmationFlags.denied);
+					
+					if(tDao.denyTransaction(t))
+						System.out.println("Transaction Denied");
+				}
+				else
+				{
+					System.out.println("Invalid input");
 					printPadding(2);
 				}
-					
+				
 			}
 		}
-		
-		printPadding(2);
-		System.out.print("");
 		
 		setEngine(EngineFlags.ViewAccount);
 	}
@@ -580,8 +595,9 @@ public class Engine
 		setEngine(EngineFlags.ViewAccount);
 		
 	}
-	private void viewPendingTransactions()
+	private void viewTransactions()
 	{
+		printPadding(2);
 		System.out.print("1. For all transactions | 2. For Pending Transactions\nInput: ");
 		
 		int input = inputScanner.nextInt();
@@ -593,6 +609,11 @@ public class Engine
 			tList = tDao.getAllTransactions();
 		else if(input == 2)
 			tList = tDao.getPendingTransactions();
+		
+		if(tList.size() > 0)
+			printPadding(2);
+		else 
+			System.out.println("No Available Transactions");
 		
 		for(Transaction t : tList)
 		{
@@ -606,10 +627,6 @@ public class Engine
 		setEngine(EngineFlags.ViewAccount);
 	}
 
-	private void viewLogsLogic()
-	{
-		
-	}
 	
 	/*****************************************************************************************************************************************/
 	// Helper methods
@@ -630,12 +647,10 @@ public class Engine
 		{
 			input = inputScanner.nextInt();
 			engineInputHandler(input);
-			printPadding();
 		}
 		else
 		{
 			System.out.println("An invalid input was provided.");
-			printPadding();
 			inputScanner.next();
 		}
 	}
@@ -667,7 +682,7 @@ public class Engine
 				engineState = EngineFlags.MakeTransaction;
 				break;
 			case 2:
-				setEngine(EngineFlags.ViewPendingTransactions);
+				setEngine(EngineFlags.ViewTransactions);
 				break;
 			case 3:
 				engineState = EngineFlags.ChangeAccountDetails;
@@ -684,7 +699,7 @@ public class Engine
 			{
 			case 1:	engineState = EngineFlags.ViewPendingAccounts;
 				break;
-			case 2: engineState = EngineFlags.ViewPendingTransactions;
+			case 2: engineState = EngineFlags.ViewTransactions;
 				break;
 			case 3: engineState = EngineFlags.ChangeAccountDetails;
 				break;
@@ -701,7 +716,7 @@ public class Engine
 	}
 	
 	/*****************************************************************************************************************************************/
-	// ---> Console display helpers
+	// Console display helpers
 	private void displayWelcomeMessage()
 	{
 		System.out.println(
@@ -784,7 +799,7 @@ public class Engine
 	// ----> Console formating help
 	private void printPadding()
 	{
-		System.out.println("================================================");
+		printPadding(1);
 	}
 	private void printPadding(int num)
 	{

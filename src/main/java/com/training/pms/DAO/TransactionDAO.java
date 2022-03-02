@@ -12,6 +12,7 @@ public interface TransactionDAO
 	public void 	searchByTransactionName(String fName);
 	public void 	searchByTransactionId(int id);
 	public boolean processTransaction(Transaction obj);
+	public boolean denyTransaction(Transaction obj);
 	public ArrayList<Transaction> getAllTransactions();
 	public ArrayList<Transaction> getPendingTransactions();
 	public ArrayList<Transaction> getPendingTransactionsById(int id);

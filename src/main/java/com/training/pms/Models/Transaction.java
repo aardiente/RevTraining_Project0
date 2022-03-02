@@ -56,10 +56,16 @@ public class Transaction
 		this(id, amount, owner);
 		this.recieverHandle = reciever;
 	}
-	public Transaction(int id, float amount, Customer owner, Customer reciever, boolean approved)
+	public Transaction(int id, float amount, Customer owner, Customer reciever, boolean approved, boolean denied)
 	{
 		this(id, amount, owner, reciever);
-		this.status = (approved) ? ConfirmationFlags.pending : ConfirmationFlags.approved;
+		//this.status = (approved) ? ConfirmationFlags.pending : ConfirmationFlags.approved;
+		
+		if(denied)
+			this.status = ConfirmationFlags.denied;
+		else
+			this.status = approved ? ConfirmationFlags.approved :  ConfirmationFlags.pending;
+	
 	}
 
 
