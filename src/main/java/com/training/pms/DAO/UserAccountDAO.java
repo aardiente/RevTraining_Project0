@@ -8,7 +8,6 @@ public interface UserAccountDAO
 	public boolean 		deleteUserAccount(UserAccount obj);
 	public void 		updateUserAccount(int id, String fName, String lName);
 	public UserAccount 	searchByUserAccountName(String fName);
-	public void 		searchByUserAccountId(int id);
 	public boolean		verifyLogin(String user, String pass);
 	public boolean		 isEmployee(String username);
 	public boolean		updateApprovalStatus(String username);

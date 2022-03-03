@@ -22,41 +22,46 @@ public class CustomerDAOImpl implements CustomerDAO
 	private static final String depositQuery = "Update customer set balance = balance + ? where customer_id = ?";
 	private static final String withdrawQuery = "Update customer set balance = balance - ? where customer_id = ?";
 	
-	private static Connection connection = DBConnection.getConnection();
+	private static Connection connection;
 	
-	@Override
-	public void addCustomer(Customer obj)
+	
+	public CustomerDAOImpl()
 	{
+		connection = DBConnection.getConnection();
+	}
+	
+	public boolean addCustomer(Customer obj)
+	{
+		if(obj == null)
+			return false;
+		
 		try
 		{
 			UserAccountDAO uaDAO = new UserAccountDAOImpl();
 			PreparedStatement state = DBConnection.getConnection().prepareStatement(insertQuery);
-			state.setFloat(1, (float) obj.getAccountBalance());
+			state.setFloat(1, obj.getAccountBalance());
 			UserAccount t = uaDAO.addUserAccount(obj);
 			
-			//System.out.println(t);
+			System.out.println(t);
 			state.setInt(2, t.getAccountId());
 			
 			
-			int inserted = state.executeUpdate();
-			
-			if(inserted != 1)
-				System.out.println("Failed Insertion");	
+			return state.executeUpdate() > 0;
+		
 			
 		} catch (Exception e)
 		{
 			System.out.println(e);
 		}
+		return false;
 	}
 
-	@Override
 	public boolean deleteCustomer(Customer obj) 
 	{
 
 		return false;
 	}
 
-	@Override
 	public void updateCustomer(String fName, String lName, UserAccount obj) 
 	{
 		// TODO Auto-generated method stub
@@ -65,7 +70,6 @@ public class CustomerDAOImpl implements CustomerDAO
 		dao.updateUserAccount(temp.getAccountId(), fName, lName);
 	}
 
-	@Override
 	public Customer searchByCustomerName(String user) 
 	{
 		// TODO Auto-generated method stub
@@ -81,15 +85,11 @@ public class CustomerDAOImpl implements CustomerDAO
 			int cLength = rsmd.getColumnCount();
 			
 			String[] queryData = new String[cLength];
-			//String[] queryColumns = new String[cLength];
-			
-			//DAOHelper.getColumnNames(rsmd, queryColumns);
-			
+
 			while(res.next())// We should only have 1 Account with a given username
 			{
 				DAOHelper.getColumnStrings(cLength, res, queryData);
-				//DAOHelper.outputFormatHelper(cLength, queryColumns, queryData);
-				obj = new Customer(Integer.valueOf(queryData[0]), queryData[1], queryData[2], queryData[3], queryData[4], Float.valueOf(queryData[5])); 
+				return new Customer(Integer.valueOf(queryData[0]), queryData[1], queryData[2], queryData[3], queryData[4], Float.valueOf(queryData[5])); 
 			}
 		} 
 		catch (SQLException e) 
@@ -101,7 +101,6 @@ public class CustomerDAOImpl implements CustomerDAO
 
 	}
 
-	@Override
 	public Customer searchByCustomerId(int id) 
 	{
 		Customer obj = null;
@@ -132,7 +131,6 @@ public class CustomerDAOImpl implements CustomerDAO
 		return obj;
 	}
 
-	@Override
 	public boolean updateCustomerBalance(Customer obj, float amount) 
 	{
 		PreparedStatement state = null;
@@ -159,7 +157,6 @@ public class CustomerDAOImpl implements CustomerDAO
 		return true;
 	}
 
-	@Override
 	public boolean withdrawFromBalance(Customer obj, float amount) 
 	{
 		PreparedStatement state = null;

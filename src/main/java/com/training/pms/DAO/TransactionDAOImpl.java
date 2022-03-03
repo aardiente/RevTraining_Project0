@@ -23,7 +23,7 @@ public class TransactionDAOImpl implements TransactionDAO
 	private static Connection connection = DBConnection.getConnection();
 	
 	@Override
-	public void addTransaction(Transaction obj) 
+	public boolean addTransaction(Transaction obj) 
 	{
 		//CallableStatement state = null;
 		PreparedStatement state = null;
@@ -41,7 +41,10 @@ public class TransactionDAOImpl implements TransactionDAO
 				state.setInt(3, obj.getCustomerHandle().getAccountId());
 			
 			if(state.executeUpdate() > 0)
+			{
 				System.out.println("Transaction created");
+				return true;
+			}
 			else
 				System.out.println("Insertion failed");
 		} 
@@ -50,8 +53,7 @@ public class TransactionDAOImpl implements TransactionDAO
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-
+		return false;
 	}
 
 	@Override
@@ -61,20 +63,22 @@ public class TransactionDAOImpl implements TransactionDAO
 	}
 
 	@Override
-	public void updateTransaction(String fName, String lName) {
+	public boolean updateTransaction(String fName, String lName)
+	{
 		// TODO Auto-generated method stub
-
+		return false;
 	}
 
 	@Override
-	public void searchByTransactionName(String fName) {
-		// TODO Auto-generated method stub
-
+	public Transaction searchByTransactionName(String fName) 
+	{
+		return null;
 	}
 
 	@Override
-	public void searchByTransactionId(int id) {
-		// TODO Auto-generated method stub
+	public Transaction searchByTransactionId(int id) 
+	{
+		return null;
 
 	}
 	public boolean denyTransaction(Transaction obj) //Implement this and use it

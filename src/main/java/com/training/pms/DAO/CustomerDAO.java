@@ -5,7 +5,7 @@ import com.training.pms.Models.UserAccount;
 
 public interface CustomerDAO //extends UserAccountDAO
 {
-	public void 		addCustomer(Customer obj);
+	public boolean 		addCustomer(Customer obj);
 	public boolean 		deleteCustomer(Customer obj);
 	public void 		updateCustomer(String fName, String lName, UserAccount Obj);
 	public Customer 	searchByCustomerName(String fName);

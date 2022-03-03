@@ -2,8 +2,6 @@ package com.training.pms.DAO;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.sql.Connection;
-
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -15,74 +13,78 @@ import com.training.pms.Utility.DBConnection;
 
 class UserAccountDAOImplTest
 {
-	private static Connection con = null;
-	private static UserAccountDAO dao = new UserAccountDAOImpl();
-	private static UserAccount userAfterAdd = null;
+	static UserAccountDAO dao = null;
+	static UserAccount after = null;
+	
 	@BeforeAll
-	static void setUpBeforeClass() throws Exception
+	static void setUpBeforeClass() throws Exception 
 	{
-		con = DBConnection.getConnection();
+		DBConnection.initConnection();
+		dao = new UserAccountDAOImpl();
+
 	}
 
 	@AfterAll
 	static void tearDownAfterClass() throws Exception 
 	{
-		con.close();
-		con = null;
+		DBConnection.closeConnection();
 	}
 
 	@BeforeEach
-	void setUp() throws Exception
-	{
-		
+	void setUp() throws Exception {
 	}
 
 	@AfterEach
-	void tearDown() throws Exception 
-	{
+	void tearDown() throws Exception {
 	}
 
 	@Test
 	void testAddUserAccount() 
 	{
-		UserAccount temp = new UserAccount(-1, "Test Case 1", "I do things", "FName", "LName");   // -1 because the db assigns its Id, this is just a temp refence to create a real object
-		userAfterAdd = dao.addUserAccount(temp);
+		UserAccount beforeAdd = new UserAccount(-1, "ClassTest", "Password", "fName", "lName");
+		after = dao.addUserAccount(beforeAdd);
 		
-		assertEquals( true, ( temp.getUsername().equals(userAfterAdd.getUsername()) ) ? true : false ); // checking if the usernames match, since its a unique column it should return the same string
+		assertTrue(after.getUsername().equals(beforeAdd.getUsername()));
 	}
 
-	@Test
-	void testDeleteUserAccount() 
-	{
-		assertEquals( true, dao.deleteUserAccount(userAfterAdd) );
-	}
 
 	@Test
 	void testUpdateUserAccount() 
 	{
-		//dao.updateUserAccount(userAfterAdd.getAccountId() , "Bob", "Dole");
+		dao.updateUserAccount(after.getAccountId(), "Class", "Test");
+		after = dao.searchByUserAccountName("ClassTest");
 		
-		
+		assertTrue(after.getFirstName().equals("Class") && after.getLastName().equals("Test"));
 	}
 
 	@Test
-	void testSearchByUserAccountName() {
-		fail("Not yet implemented");
+	void testSearchByUserAccountName() 
+	{
+		assertTrue(dao.searchByUserAccountName("ClassTest").getUsername().equals("ClassTest"));
 	}
 
 	@Test
-	void testIsEmployee() {
-		fail("Not yet implemented");
+	void testIsEmployee() 
+	{
+		assertFalse(after.isEmployee()); // We never marked this account as an Employee
 	}
 
 	@Test
-	void testVerifyLogin() {
-		fail("Not yet implemented");
+	void testVerifyLogin()
+	{
+		assertFalse(dao.verifyLogin(after.getUsername(), after.getPassword())); // We didn't activate the account
 	}
 
 	@Test
-	void testUpdateApprovalStatus() {
-		fail("Not yet implemented");
+	void testUpdateApprovalStatus() 
+	{
+		assertTrue(dao.updateApprovalStatus(after.getUsername()));
 	}
+	@Test
+	void testDeleteUserAccount()
+	{
+		assertTrue(dao.deleteUserAccount(after));
+	}
+
 
 }

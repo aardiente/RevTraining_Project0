@@ -36,15 +36,17 @@ public class UserAccountDAOImpl implements UserAccountDAO
 			state.setDate(5, new Date(System.currentTimeMillis())); // Stack overflow suggestion for current date
 			state.setBoolean(6, obj.isActivationStatus());
 			
-			int created = state.executeUpdate();
-			obj = searchByUserAccountName(obj.getUsername());
+			if( state.executeUpdate() > 0 )
+				return searchByUserAccountName(obj.getUsername());
 			
-//			if(created >= 0)
-//				System.out.println("Object was created: " + obj);
 		} 
 		catch (SQLException e) 
 		{
 			e.printStackTrace();
+		}
+		catch (NullPointerException e)
+		{
+			System.out.println(e.getMessage());
 		}
 		
 		return obj;
@@ -55,6 +57,9 @@ public class UserAccountDAOImpl implements UserAccountDAO
 	{
 		try 
 		{
+			if(obj == null)
+				throw new NullPointerException("Argument 'obj' is null");
+			
 			PreparedStatement stat = connection.prepareStatement(deleteQuery);
 			stat.setString(1, obj.getUsername());
 			
@@ -66,7 +71,7 @@ public class UserAccountDAOImpl implements UserAccountDAO
 			e.printStackTrace();
 		}catch (NullPointerException e)
 		{
-			e.printStackTrace();
+			System.out.println(e.getLocalizedMessage());
 		}
 		
 		return false;
@@ -110,33 +115,24 @@ public class UserAccountDAOImpl implements UserAccountDAO
 			state = connection.prepareStatement(searchByUserNameQuery);
 			state.setString(1, username);
 			ResultSet resSet = state.executeQuery();
+			
 			ResultSetMetaData rsmd = resSet.getMetaData();
+			
 			int cLength = rsmd.getColumnCount();
 						
-			String[] queryData = new String[cLength];
-			String[] queryColumns = new String[cLength];
-			
-			DAOHelper.getColumnNames(rsmd, queryColumns);
+			String[] queryData = new String[cLength];			
 			
 			while(resSet.next())// We should only have 1 Account with a given username
 			{
 				DAOHelper.getColumnStrings(cLength, resSet, queryData);
-				obj = new UserAccount(Integer.valueOf(queryData[0]), queryData[1], queryData[2], queryData[3], queryData[4]);
+				return new UserAccount(Integer.valueOf(queryData[0]), queryData[1], queryData[2], queryData[3], queryData[4]);
 			}
-			//System.out.println("UserAccount: " + obj);
 		} 
 		catch (SQLException e)
 		{
-
 			e.printStackTrace();
 		}
 		return obj;
-	}
-
-	@Override
-	public void searchByUserAccountId(int id) {
-		// TODO Auto-generated method stub
-
 	}
 
 	public boolean isEmployee(String username)
