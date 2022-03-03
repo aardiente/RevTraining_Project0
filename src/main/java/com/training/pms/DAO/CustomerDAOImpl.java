@@ -5,6 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
 
 import com.training.pms.Exceptions.InvalidTransactionException;
 import com.training.pms.Models.Customer;
@@ -193,5 +195,37 @@ public class CustomerDAOImpl implements CustomerDAO
 		return true;
 	}
 
-
+	public ArrayList<Customer> getAllCustomers()
+	{
+		ArrayList<Customer> cList = new ArrayList<Customer>();
+		
+		try 
+		{
+			Statement stat = connection.createStatement();
+			
+			if(stat.execute("select customer_id, user_name, user_password, first_name, last_name, balance from useraccount join customer on fk_userid = user_id"))
+			{
+				ResultSet set = stat.getResultSet();
+				
+				ResultSetMetaData rsmd = set.getMetaData();
+				int cLength = rsmd.getColumnCount();
+				String[] queryData = new String[cLength];
+				
+				while(set.next())
+				{
+					DAOHelper.getColumnStrings(cLength, set, queryData);
+					cList.add( new Customer(Integer.valueOf(queryData[0]), queryData[1], queryData[2], queryData[3], queryData[4], Float.valueOf(queryData[5]))); 
+				}
+			}
+			
+		} 
+		catch (SQLException e) 
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		return cList;
+	}
 }

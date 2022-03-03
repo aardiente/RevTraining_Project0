@@ -103,7 +103,7 @@ public class Engine
 					changeAccountDetailsLogic();
 					break;
 				case ViewPendingAccounts:
-					viewPendingLogic();
+					viewCustomerAccount();
 					break;
 				case ViewTransactions:
 					if(currentUser.isEmployee())
@@ -544,7 +544,7 @@ public class Engine
 		if(cList.size() > 0)
 		{
 			Collections.sort(cList, (Customer c1, Customer c2) -> c1.getAccountId() - c2.getAccountId() ); // Sort the list on ID in desc order 
-			
+			printPadding(3);
 			for(Customer obj : cList)
 				System.out.printf("Customer Id: %-5d | Username: %-12s | Name: %-32s | Balance: %12f |\n", 
 						obj.getAccountId(), obj.getUsername(), obj.getFirstName() + " " + obj.getLastName(), obj.getAccountBalance());
@@ -599,7 +599,7 @@ public class Engine
 				
 				if(buffer.equals("r") || buffer.equals("R"))
 				{
-					setEngine(EngineFlags.ViewAccount);
+					setEngine(EngineFlags.ViewPendingAccounts);
 				}
 				else
 					System.out.println("Invalid input");
@@ -608,7 +608,7 @@ public class Engine
 		else
 			System.out.println("Transaction Box is Empty... :(");
 		
-		setEngine(EngineFlags.ViewAccount);
+		//setEngine(EngineFlags.ViewAccount);
 		
 	}
 	private void viewTransactions()
@@ -642,7 +642,64 @@ public class Engine
 		
 		setEngine(EngineFlags.ViewAccount);
 	}
-
+	private void viewCustomerAccount()
+	{
+		boolean flag = false;
+		CustomerDAO dao = new CustomerDAOImpl();
+		
+		do
+		{
+			System.out.print(	"---------- Options ----------\n"
+							+	"1. Pending Accounts\n"
+							+	"2. List All Accounts\n"
+							+	"3. View Customer By ID\n"
+							+	"9. To return to the menu\n"
+							+	"Input: ");
+			
+			int input = -1;
+			if(inputScanner.hasNextInt())
+			{
+				input = inputScanner.nextInt();
+				switch(input)
+				{
+				case 1:
+					//
+					viewPendingLogic();
+					flag = true;
+					break;
+				case 2:
+					// List all customers
+					
+					ArrayList<Customer> cList = dao.getAllCustomers();
+					
+					cList.forEach( (Customer c)->
+							{ 
+								printPadding(2);
+								System.out.printf("Customer ID: %-5d | Username: %-20s | Name: %-12s %-12s |\n", c.getAccountId(), c.getUsername(), c.getFirstName(), c.getLastName());
+								printPadding(2);
+							});
+					break;
+				case 3:
+					System.out.print("Please enter the account you want to access: ");
+					if(inputScanner.hasNextInt())
+					{
+						input = inputScanner.nextInt();
+						
+						printPadding(2);
+						System.out.println(dao.searchByCustomerId(input));
+						printPadding(2);
+					}
+					break;
+				case 9:
+					flag = true;
+					break;
+				}
+				input = -1;
+			}
+		}while(!flag);
+		
+		setEngine(EngineFlags.ViewAccount);
+	}
 	
 	/*****************************************************************************************************************************************/
 	// Helper methods

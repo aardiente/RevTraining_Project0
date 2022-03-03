@@ -1,5 +1,7 @@
 package com.training.pms.DAO;
 
+import java.util.ArrayList;
+
 import com.training.pms.Models.Customer;
 import com.training.pms.Models.UserAccount;
 
@@ -12,4 +14,5 @@ public interface CustomerDAO //extends UserAccountDAO
 	public Customer 	searchByCustomerId(int id);
 	public boolean		updateCustomerBalance(Customer obj, float amount);
 	public boolean		withdrawFromBalance(Customer obj, float amount);
+	public ArrayList<Customer> getAllCustomers();
 }
