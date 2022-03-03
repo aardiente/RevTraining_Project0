@@ -42,7 +42,7 @@ public class UserAccountDAOImpl implements UserAccountDAO
 		} 
 		catch (SQLException e) 
 		{
-			e.printStackTrace();
+			System.out.println(e.getMessage());
 		}
 		catch (NullPointerException e)
 		{

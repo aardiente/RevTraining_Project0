@@ -128,7 +128,7 @@ public class TransactionDAOImpl implements TransactionDAO
 					return true;
 				}
 			}
-			else if(obj.getCustomerHandle().getAccountId() == obj.getRecieverHandle().getAccountId() &&  obj.getStatus() == ConfirmationFlags.approved)
+			else if(obj.getCustomerHandle().getAccountId() == obj.getRecieverHandle().getAccountId() && obj.getStatus() == ConfirmationFlags.approved)
 			{
 				PreparedStatement stat = connection.prepareStatement("update customer set balance = balance - ? where customer_id = ?");
 				stat.setInt(2, obj.getCustomerHandle().getAccountId());
@@ -159,7 +159,7 @@ public class TransactionDAOImpl implements TransactionDAO
 	public ArrayList<Transaction> getAllTransactions()
 	{
 		ArrayList<Transaction> tList = new ArrayList<Transaction>();
-		
+
 		try 
 		{
 			PreparedStatement stat = connection.prepareStatement(getAll);
@@ -180,11 +180,10 @@ public class TransactionDAOImpl implements TransactionDAO
 						Float.valueOf(data[1]), 	// amount
 						cDao.searchByCustomerId( Integer.valueOf(data[2]) ), 	// sender
 						cDao.searchByCustomerId( Integer.valueOf(data[3]) ),	// receiver
-						data[4].equals("t") ? true : false,		// Approval flag
+						data[4].equals("t") ? true : false,		// Approved flag
 						data[5].equals("t") ? true : false);	// Denied flag
 				
-				
-				
+
 				tList.add(temp);
 			}
 		} catch (SQLException e) 

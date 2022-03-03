@@ -25,7 +25,7 @@ public class DBConnection
 	
 	public static void initConnection()
 	{
-        try 
+        try // initializing a JDBC type 4 driver
         {
         	FileReader rdr = new FileReader(propPath);
         	Properties prop = new Properties();

@@ -223,6 +223,11 @@ public class Engine
 					break;
 				}
 			}
+			else
+			{
+				System.out.println("Invalid input. Enter anything and submit to continue...");
+				inputScanner.next();
+			}
 			
 		}while(!flag);
 		printPadding();
@@ -271,7 +276,7 @@ public class Engine
 					eDAO.addEmployee(new Employee(tUser,tPass, tFName, tLName));
 					System.out.println("Employee Accounts are activated by default, feel free to sign in.");
 				}
-				else
+				else if(typeFlag == 1)
 				{
 					CustomerDAO cDAO = new CustomerDAOImpl();
 					cDAO.addCustomer(new Customer(tUser, tPass, tFName, tLName, tBalance));
@@ -383,7 +388,7 @@ public class Engine
 				
 				if(amount < 0.0f)
 				{
-					System.out.println("You can't add negative funds, we can just burn the money if you'd prefer that... we don't care.");
+					System.out.println("You can't add negative funds. I can just burn the money if you'd prefer that?... I don't care.");
 					inputScanner.next();
 				}
 				else // I guess adding 0 is funds is fine.
@@ -486,6 +491,7 @@ public class Engine
 		setEngine(EngineFlags.ViewAccount);
 	}
 	
+	// Employee Logic
 	private void viewCustomerTransactions()
 	{
 		TransactionDAO tDao = new TransactionDAOImpl();
@@ -533,8 +539,6 @@ public class Engine
 		
 		setEngine(EngineFlags.ViewAccount);
 	}
-	
-	// Employee Logic
 	private void viewPendingLogic() 
 	{
 		EmployeeDAO dao = new EmployeeDAOImpl();
@@ -587,7 +591,6 @@ public class Engine
 					}
 					else
 						System.out.println("Invalid input.");
-					
 				}
 				else
 					System.out.println("Customer Id: " + input + " doesn't exist. Returning to previous menu");
@@ -668,8 +671,6 @@ public class Engine
 					flag = true;
 					break;
 				case 2:
-					// List all customers
-					
 					ArrayList<Customer> cList = dao.getAllCustomers();
 					
 					cList.forEach( (Customer c)->

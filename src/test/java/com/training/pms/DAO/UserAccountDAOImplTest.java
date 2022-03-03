@@ -21,7 +21,6 @@ class UserAccountDAOImplTest
 	{
 		DBConnection.initConnection();
 		dao = new UserAccountDAOImpl();
-
 	}
 
 	@AfterAll
@@ -30,13 +29,6 @@ class UserAccountDAOImplTest
 		DBConnection.closeConnection();
 	}
 
-	@BeforeEach
-	void setUp() throws Exception {
-	}
-
-	@AfterEach
-	void tearDown() throws Exception {
-	}
 
 	@Test
 	void testAddUserAccount() 
